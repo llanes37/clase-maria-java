@@ -16,6 +16,13 @@ Curso Completo de Interfaces Gráficas en Java
 - Elección: `JComboBox` (modelo + opción "Otro…").
 - Lista: `JList` (con `DefaultListModel` y `JScrollPane`).
 
+### Cuándo usar cada uno
+- `JTextField` para entrada corta (una línea). `JTextArea` para texto largo y multilínea.
+- `JPasswordField` oculta la entrada; recuerda leer con `getPassword()` (char[]) y borrar si es sensible.
+- `JCheckBox` para activaciones independientes (múltiple). `JRadioButton` para elección exclusiva dentro de un `ButtonGroup`.
+- `JComboBox` cuando la lista es conocida y compacta; puedes permitir “Otro…” para personalizar.
+- `JList` cuando quieres mostrar un conjunto más largo, con selección simple o múltiple.
+
 ---
 
 ## ⚡ Ejemplo 1 — Texto y lectura de valores
@@ -48,6 +55,10 @@ btnLeer.addActionListener(e -> {
 
 Pista: habilita/deshabilita el botón con `DocumentListener` según si el nombre está vacío.
 
+Consejos:
+- Evita mostrar la contraseña en claro. En la demo usamos "(oculta)".
+- Para accesibilidad, asocia `JLabel` al campo con `setLabelFor(...)`.
+
 ---
 
 ## ⚡ Ejemplo 2 — Selección: checks y radios
@@ -79,6 +90,10 @@ ItemListener refrescar = e -> {
     String dispo = rbM.isSelected()?"Mañanas": rbT.isSelected()?"Tardes":"Noches";
     resultado.setText(sb.toString().trim() + " | Disponibilidad: " + dispo);
 };
+
+Buenas prácticas:
+- Añade todos los `JRadioButton` a un `ButtonGroup` para asegurar exclusión real.
+- Si `Otro` requiere texto adicional, habilita/deshabilita el campo según estado.
 ```
 
 ---
@@ -89,6 +104,10 @@ ItemListener refrescar = e -> {
 DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(new String[]{
     "Java", "Python", "JavaScript", "C#", "Kotlin", "Otro…"
 });
+
+Notas:
+- `DefaultComboBoxModel` permite insertar elementos dinámicamente (ideal para la opción "Otro…").
+- Si cancelan o introducen vacío, revierte a una selección segura (p. ej. índice 0).
 JComboBox<String> combo = new JComboBox<>(model);
 combo.addItemListener(e -> {
     if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -129,6 +148,10 @@ lista.addListSelectionListener(e -> {
         area.setText("Descripción de: " + sel + "\n\nEscribe aquí tus notas...");
     }
 });
+
+Sugerencias:
+- Ajusta `setSelectionMode(...)` según el caso: `SINGLE_SELECTION`, `SINGLE_INTERVAL_SELECTION`, `MULTIPLE_INTERVAL_SELECTION`.
+- Para varias selecciones, usa `getSelectedValuesList()`.
 ```
 
 ---
@@ -138,6 +161,36 @@ lista.addListSelectionListener(e -> {
 - Agrupar `JRadioButton` con `ButtonGroup` para exclusión.
 - Usar modelos de datos simples cuando sea útil (`DefaultComboBoxModel`, `DefaultListModel`).
 - Mostrar el resultado en una etiqueta o área de texto separada para confirmar al usuario.
+
+---
+
+## ⚠️ Errores comunes y cómo evitarlos
+- Leer `JPasswordField` con `getText()` → usa `getPassword()`.
+- Olvidar el `ButtonGroup` → radios que no son exclusivos.
+- `JTextArea` sin `JScrollPane` → no podrás desplazar el contenido.
+- `JList` muy larga sin scroll ni filtro → mala UX (considera `JScrollPane` y un campo de búsqueda en UTs avanzadas).
+
+---
+
+## 🧰 Modelos y eventos mínimos
+- `DefaultComboBoxModel` y `DefaultListModel` cubren el 90% de casos para combos y listas.
+- `DocumentListener` es clave para reactividad en campos de texto.
+- `ItemListener` para cambios de selección (checks/radios/combos).
+
+---
+
+## ❓ FAQ rápida
+- ¿Cómo habilito un botón cuando un campo no esté vacío? → `DocumentListener` sobre `getDocument()`.
+- ¿Cómo mantengo un combo con “Otro…” sin duplicados? → Inserta el nuevo antes de "Otro…" y selecciona; valida entradas vacías.
+- ¿Cómo reseteo rápido un formulario? → Recorre los componentes del panel y restablece su estado (`setText("")`, `setSelected(false)`, etc.).
+
+---
+
+## ✅ Checklist
+- [ ] Campos de texto con validación básica.
+- [ ] Radios dentro de `ButtonGroup`.
+- [ ] `JTextArea`/`JList` envueltos en `JScrollPane`.
+- [ ] Combos con modelo y manejo de opción “Otro…”.
 
 ---
 

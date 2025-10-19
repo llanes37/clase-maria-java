@@ -17,6 +17,18 @@ Relación clave:
 - Contenedor → quién alberga (p. ej. `JPanel`).
 - Layout → cómo coloca a sus hijos (p. ej. `new FlowLayout(...)`).
 
+### Cómo negocian el tamaño los layouts
+Cada componente expone tres “pistas” de tamaño:
+- `getPreferredSize()` → tamaño deseado (el más usado con `pack()`).
+- `getMinimumSize()` → tamaño mínimo admisible.
+- `getMaximumSize()` → tamaño máximo preferible.
+
+Según el layout, estas pistas se respetan o se ignoran parcialmente:
+- `FlowLayout` respeta el `preferredSize` de cada hijo y los va colocando de izquierda a derecha; si no caben, salta de línea.
+- `BorderLayout` intenta respetar `preferredSize` de NORTH/SOUTH/EAST/WEST; el CENTER ocupa el resto.
+- `GridLayout` ignora `preferredSize` y fuerza celdas homogéneas.
+- `BoxLayout` puede respetar `preferredSize`, pero deja controlar límites con `setMaximumSize` y alineación con `setAlignmentX/Y`.
+
 ---
 
 ## 🧩 Layouts esenciales
@@ -39,6 +51,14 @@ Relación clave:
   - Apila componentes en columna (`Y_AXIS`) o fila (`X_AXIS`).
   - Permite espaciadores: `RigidArea` (fijo) y `Glue` (flexible).
   - Muy práctico para alinear botones a un lado.
+
+---
+
+## 🧭 Mapa mental para elegir layout
+- ¿Componentes de tamaño “natural” en una fila que se adapta? → FlowLayout.
+- ¿Estructura principal con cabecera, pie y zona central flexible? → BorderLayout.
+- ¿Parrilla regular o formulario rápido 2xN (labels-campos)? → GridLayout.
+- ¿Apilar en columna o alinear botones a derecha/izquierda? → BoxLayout.
 
 ---
 
@@ -118,10 +138,47 @@ col.add(new JButton("Abajo"));
 
 ---
 
-## 🧭 Buenas prácticas
+## 🧭 Buenas prácticas (avanzadas)
 - Anida paneles: estructura principal con `BorderLayout` y dentro paneles con otros layouts.
 - Usa `EmptyBorder` para dar márgenes internos (respira mejor).
 - Llama a `pack()` y `setLocationRelativeTo(null)` al final.
+- Si cambias paneles en caliente (swap): `removeAll()` → `add(...)` → `revalidate()` → `repaint()`.
+- Evita `null layout` y `setBounds(...)`: rompen la portabilidad y el autoescalado.
+- Define `setMinimumSize`/`setPreferredSize` con criterio; no fuerces tamaños en todos los componentes.
+- En `BoxLayout`, usa `setMaximumSize` para impedir que los botones crezcan en exceso.
+
+---
+
+## ⚠️ Errores comunes y cómo evitarlos
+- BorderLayout: añadir dos componentes a `CENTER` sin quitar el anterior → el primero desaparece. Solución: usa un “lienzo” y haz swap correcto.
+- Olvidar `revalidate()/repaint()` tras cambiar el árbol de componentes → la UI no se refresca.
+- Usar `setSize(...)` en vez de `pack()` → tamaños inconsistentes entre plataformas y escalado de fuentes.
+- BoxLayout: no ajustar `AlignmentX/AlignmentY` → componentes mal alineados.
+- GridLayout: querer celdas con tamaños distintos → no es el layout adecuado (considera GridBagLayout en UT avanzada).
+
+---
+
+## 🧱 Patrones de anidación recomendados
+- Shell principal: `BorderLayout` con NORTH (cabecera), CENTER (contenido), SOUTH (estado).
+- Formulario clásico: CENTER con `GridLayout(filas,2)` para pares `label-campo`, SOUTH con `BoxLayout.X_AXIS` para botonera a la derecha con `HorizontalGlue`.
+- Panel de detalle: `BoxLayout.Y_AXIS` con secciones separadas por `RigidArea` y `TitledBorder`.
+
+---
+
+## ❓ FAQ rápida
+- ¿Cómo centro la ventana? → `setLocationRelativeTo(null)` tras `pack()`.
+- ¿Cómo dejo margen alrededor del contenido? → `root.setBorder(new EmptyBorder(...))`.
+- ¿Puedo mezclar varios layouts? → Sí, anidando `JPanel` con distintos layouts.
+- ¿Cómo creo espacios entre componentes? → `hgap/vgap` del layout o `RigidArea/Strut` en `BoxLayout`.
+
+---
+
+## ✅ Checklist de implementación
+- [ ] `JFrame` con `BorderLayout` y márgenes (`EmptyBorder`).
+- [ ] Elección del layout adecuado por sección.
+- [ ] `pack()` y centrado al terminar.
+- [ ] Intercambio de paneles con `revalidate()`/`repaint()` si hay contenido dinámico.
+- [ ] Evitar `null layout` y tamaños absolutos.
 
 ---
 

@@ -19,6 +19,9 @@ Curso Completo de Interfaces Gráficas en Java
 
 Patrón mental: "Cuando el usuario haga X en Y, entonces Z".
 
+### El EDT (Event Dispatch Thread)
+Swing no es thread-safe. Construye y modifica la UI siempre en el EDT con `SwingUtilities.invokeLater(...)`. Si una tarea tarda (I/O, cálculos pesados), usa `SwingWorker` para no bloquear la interfaz.
+
 ---
 
 ## ⚡ ActionListener — acciones de botón y ENTER en campos
@@ -43,6 +46,10 @@ tfNombre.addActionListener(e -> btnSaludar.doClick());
 
 Consejo: mantén el manejador corto; si crece, extrae a un método.
 
+Patrones útiles:
+- Reutiliza lógica: haz que el `JTextField` dispare `doClick()` sobre el botón para centralizar el flujo.
+- Valida antes de actuar (p. ej., campos vacíos o límites de longitud).
+
 ---
 
 ## ⚡ ItemListener — cambios de selección
@@ -65,6 +72,10 @@ chkNoticias.addItemListener(refrescar);
 rbA.addItemListener(refrescar);
 rbB.addItemListener(refrescar);
 combo.addItemListener(e -> { if (e.getStateChange()==ItemEvent.SELECTED) refrescar.itemStateChanged(e); });
+
+Notas:
+- `ItemListener` notifica tanto selección como deselección; filtra por `SELECTED` cuando proceda.
+- Para `JComboBox`, el `ActionListener` también es válido; elige uno y mantén consistencia.
 ```
 
 ---
@@ -89,6 +100,10 @@ ChangeListener refrescar = e -> {
 };
 sliderVol.addChangeListener(refrescar);
 spinnerVel.addChangeListener(refrescar);
+
+Tips:
+- `JSlider` dispara eventos mientras arrastras: evita lógica pesada dentro del listener.
+- Puedes sincronizar controles (p. ej. `JProgressBar`) en tiempo real.
 ```
 
 ---
@@ -112,6 +127,9 @@ campo.addKeyListener(new KeyAdapter() {
         historial.append("typed: " + e.getKeyChar() + "\n");
     }
 });
+
+Recomendación:
+- Para atajos globales en componentes Swing, considera `InputMap/ActionMap` (Key Bindings) en vez de `KeyListener` en UTs avanzadas.
 ```
 
 ---
@@ -127,9 +145,30 @@ JPanel patio = new JPanel() {
         for (Point pt : puntos) g.fillOval(pt.x-3, pt.y-3, 6, 6);
     }
 };
-patio.setPreferredSize(new Dimension(400, 300));
 
-patio.addMouseListener(new MouseAdapter() {
+Ideas:
+- Combina con `MouseMotionListener` para arrastre y seguimiento de coordenadas.
+- En demos de dibujo, guarda los puntos y repíntalos dentro de `paintComponent` (no dibujes directo con `getGraphics()`).
+
+---
+
+## ⚠️ Errores comunes y cómo evitarlos
+- Bloquear el EDT con tareas largas → UI congelada. Usa `SwingWorker` o hilos para el trabajo pesado.
+- Acceder a Swing desde hilos externos sin usar `invokeLater` → comportamiento indeterminado.
+- Lógica extensa dentro de listeners → extrae a métodos auxiliares para testabilidad.
+- Olvidar quitar listeners en componentes reutilizados → fugas y dobles ejecuciones (casos avanzados).
+
+---
+
+## ❓ FAQ rápida
+
+---
+
+## ✅ Checklist
+- [ ] Construcción y modificaciones de UI en el EDT.
+- [ ] Listeners breves y delegación a métodos.
+- [ ] Validación antes de actuar (campos vacíos, límites, rangos).
+- [ ] Evitar trabajo pesado en listeners; usar `SwingWorker` si aplica.
     @Override public void mouseClicked(MouseEvent e) {
         if (SwingUtilities.isRightMouseButton(e)) {
             patio.getGraphics().dispose();
