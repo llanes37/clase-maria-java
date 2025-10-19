@@ -49,6 +49,9 @@ public class UT2_ContenedoresYLayouts {
     // ! REGION 1) PUNTO DE ENTRADA — ARRANQUE EN EL EDT
     // ! ========================================================
     public static void main(String[] args) {
+        // ¡Clave en Swing! Toda construcción/actualización de UI debe ir en el EDT (Event Dispatch Thread)
+        // para evitar condiciones de carrera y comportamientos erráticos.
+        // invokeLater encola la tarea para ejecutarse en dicho hilo.
         SwingUtilities.invokeLater(UT2_ContenedoresYLayouts::mostrarVentanaPrincipal);
     }
 
@@ -56,14 +59,18 @@ public class UT2_ContenedoresYLayouts {
     // ! REGION 2) VENTANA PRINCIPAL Y CONMUTADOR DE DEMOS
     // ! ========================================================
     private static void mostrarVentanaPrincipal() {
-        // * Estructura base: BorderLayout en el root → arriba botones, centro “lienzo”
+        // Estructura general: un JFrame con un panel raíz BorderLayout.
+        // Usaremos la zona NORTH para una cabecera con botones y la zona CENTER como “lienzo”
+        // donde iremos sustituyendo el contenido para cada demo de layout.
         JFrame f = new JFrame("UT2 · Contenedores y Layouts");
+        // Cerrar la aplicación cuando se cierre la ventana principal.
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        JPanel root = new JPanel(new BorderLayout(10, 10));
-        root.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // Panel raíz con BorderLayout y un margen exterior (padding) para que “respire”.
+        JPanel root = new JPanel(new BorderLayout(10, 10)); // 10px de separación entre regiones
+        root.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // margen interno
 
-        // -- Cabecera con botones para cambiar de demo (usa FlowLayout por defecto)
+        // Cabecera de navegación: usa FlowLayout por defecto (izq→der), ideal para una tira de botones.
         JPanel cabecera = new JPanel(); // FlowLayout (izquierda→derecha)
         JLabel lbl = new JLabel("Selecciona demo: ");
         JButton bFlow   = new JButton("FlowLayout");
@@ -71,39 +78,45 @@ public class UT2_ContenedoresYLayouts {
         JButton bGrid   = new JButton("GridLayout");
         JButton bBox    = new JButton("BoxLayout");
 
+        // Orden de añadido = orden visual en FlowLayout.
         cabecera.add(lbl);
         cabecera.add(bFlow);
         cabecera.add(bBorder);
         cabecera.add(bGrid);
         cabecera.add(bBox);
 
-        // -- Lienzo central donde “montamos” cada demo de layout
+        // “Lienzo” central: un panel con BorderLayout que contendrá dinámicamente cada demo.
         JPanel lienzo = new JPanel(new BorderLayout());
-        lienzo.add(panelFlowDemo(), BorderLayout.CENTER); // Demo por defecto
+        // Cargamos por defecto la demo de FlowLayout en el centro del “lienzo”.
+        lienzo.add(panelFlowDemo(), BorderLayout.CENTER);
 
-        // -- Conectar botones
+        // Conectar acciones de los botones: al pulsar, reemplazamos el contenido del lienzo.
         bFlow.addActionListener(e -> swap(lienzo, panelFlowDemo()));
         bBorder.addActionListener(e -> swap(lienzo, panelBorderDemo()));
         bGrid.addActionListener(e -> swap(lienzo, panelGridDemo()));
         bBox.addActionListener(e -> swap(lienzo, panelBoxDemo()));
 
-        // -- Colocar en el root
+        // Ensamblar el root: cabecera arriba, lienzo en el centro.
         root.add(cabecera, BorderLayout.NORTH);
         root.add(lienzo, BorderLayout.CENTER);
 
-        // -- Finalizar ventana
+        // Finalizar y mostrar la ventana con tamaño óptimo según contenido.
         f.setContentPane(root);
-        f.pack();
-        f.setMinimumSize(new Dimension(640, 420));
-        f.setLocationRelativeTo(null);
+        f.pack(); // calcula el tamaño según sus componentes preferidos
+        f.setMinimumSize(new Dimension(640, 420)); // evita tamaños demasiado pequeños
+        f.setLocationRelativeTo(null); // centra en pantalla
         f.setVisible(true);
     }
 
     // * Utilidad para cambiar el contenido del “lienzo”
     private static void swap(JPanel lienzo, JPanel nuevoCentro) {
+        // Quita todo el contenido actual del “lienzo”…
         lienzo.removeAll();
+        // …y añade el nuevo panel en la región CENTER.
         lienzo.add(nuevoCentro, BorderLayout.CENTER);
+        // revalidate() pide al layout que recalcule posiciones/tamaños tras los cambios.
         lienzo.revalidate();
+        // repaint() fuerza un repintado para reflejar visualmente el nuevo contenido.
         lienzo.repaint();
     }
 
@@ -113,15 +126,19 @@ public class UT2_ContenedoresYLayouts {
 
     // * 3.1) FlowLayout: coloca componentes en fila (respeta orden de añadido)
     private static JPanel panelFlowDemo() {
+        // Panel contenedor de la demo con BorderLayout para separar contenido y texto explicativo.
         JPanel p = new JPanel(new BorderLayout(8, 8));
         p.setBorder(titulo("FlowLayout · Fila simple (izquierda→derecha)"));
 
+        // "fila" usa FlowLayout: coloca componentes en línea respetando el orden de añadido.
+        // Alineamos a la izquierda y dejamos 10px entre componentes (H y V).
         JPanel fila = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         for (int i = 1; i <= 6; i++) {
             JButton b = new JButton("B" + i);
             fila.add(b);
         }
 
+        // Texto descriptivo embebido para reforzar el concepto.
         JTextArea info = new JTextArea(
             "FlowLayout:\n" +
             "• Coloca componentes en fila, respetando el orden de inserción.\n" +
@@ -140,15 +157,18 @@ public class UT2_ContenedoresYLayouts {
 
     // * 3.2) BorderLayout: NORTH/SOUTH/EAST/WEST/CENTER
     private static JPanel panelBorderDemo() {
+        // BorderLayout divide el espacio en 5 regiones. CENTER ocupa lo que reste.
         JPanel p = new JPanel(new BorderLayout(8, 8));
         p.setBorder(titulo("BorderLayout · 5 regiones"));
 
+        // Cajas de color con etiqueta para visualizar cada región.
         JPanel north = cajaColor("NORTH");
         JPanel south = cajaColor("SOUTH");
         JPanel east  = cajaColor("EAST");
         JPanel west  = cajaColor("WEST");
         JPanel center= cajaColor("CENTER");
 
+        // Añadimos cada panel a su zona correspondiente.
         p.add(north, BorderLayout.NORTH);
         p.add(south, BorderLayout.SOUTH);
         p.add(east,  BorderLayout.EAST);
@@ -160,10 +180,11 @@ public class UT2_ContenedoresYLayouts {
 
     // * 3.3) GridLayout: rejilla F x C (todas las celdas mismo tamaño)
     private static JPanel panelGridDemo() {
+        // GridLayout crea una rejilla regular: todas las celdas ocupan el mismo tamaño.
         JPanel p = new JPanel(new BorderLayout(8, 8));
         p.setBorder(titulo("GridLayout · 2 filas x 3 columnas"));
 
-        JPanel grid = new JPanel(new GridLayout(2, 3, 8, 8)); // gaps H,V
+        JPanel grid = new JPanel(new GridLayout(2, 3, 8, 8)); // 2x3 con separación 8px
         for (int i = 1; i <= 6; i++) {
             grid.add(botonGrande("C" + i));
         }
@@ -186,6 +207,7 @@ public class UT2_ContenedoresYLayouts {
 
     // * 3.4) BoxLayout: apila en columna o fila, con espaciadores
     private static JPanel panelBoxDemo() {
+        // BoxLayout permite apilar componentes en columna (Y_AXIS) o fila (X_AXIS).
         JPanel p = new JPanel(new BorderLayout(8, 8));
         p.setBorder(titulo("BoxLayout · Columna con espaciadores"));
 
@@ -194,6 +216,7 @@ public class UT2_ContenedoresYLayouts {
         columna.setBorder(new EmptyBorder(10,10,10,10));
 
         // Elementos + espaciadores:
+        // RigidArea = hueco fijo. VerticalGlue = espacio flexible que empuja los elementos.
         columna.add(botonAnchura("Arriba"));
         columna.add(Box.createRigidArea(new Dimension(0, 10))); // espacio fijo vertical
         columna.add(botonAnchura("Centro"));
@@ -269,8 +292,9 @@ public class UT2_ContenedoresYLayouts {
     // ! REGION 6) HELPERS VISUALES (BORDES, BOTONES DE DEMO)
     // ! ========================================================
     private static TitledBorder titulo(String t) {
+        // Helper para crear un TitledBorder con estilo discreto, útil a modo didáctico.
         return BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(new Color(200, 200, 200)),
+            BorderFactory.createLineBorder(new Color(200, 200, 200)), // borde gris claro
             t,
             TitledBorder.LEFT,
             TitledBorder.TOP,
@@ -280,9 +304,10 @@ public class UT2_ContenedoresYLayouts {
     }
 
     private static JPanel cajaColor(String texto) {
-        JPanel p = new JPanel(new GridBagLayout()); // centra el label
-        p.setBackground(new Color(240, 244, 248));
-        p.setBorder(new LineBorder(new Color(200, 200, 200)));
+        // Pequeño panel coloreado con un JLabel centrado, para visualizar regiones.
+        JPanel p = new JPanel(new GridBagLayout()); // GridBagLayout facilita centrar el label
+        p.setBackground(new Color(240, 244, 248)); // azul muy claro
+        p.setBorder(new LineBorder(new Color(200, 200, 200))); // borde sutil
         JLabel l = new JLabel(texto);
         l.setFont(l.getFont().deriveFont(Font.BOLD, 12f));
         p.add(l);
@@ -290,15 +315,17 @@ public class UT2_ContenedoresYLayouts {
     }
 
     private static JButton botonGrande(String t) {
+        // Botón con tamaño preferido más generoso, útil para ver cómo GridLayout iguala celdas.
         JButton b = new JButton(t);
         b.setPreferredSize(new Dimension(96, 48));
         return b;
     }
 
     private static JButton botonAnchura(String t) {
+        // Botón preparado para BoxLayout en columna: ocupa el ancho disponible y altura fija.
         JButton b = new JButton(t);
-        b.setAlignmentX(Component.CENTER_ALIGNMENT); // útil para BoxLayout en columna
-        b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36)); // que ocupe ancho disponible
+        b.setAlignmentX(Component.CENTER_ALIGNMENT); // alineación horizontal cuando apila
+        b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36)); // ancho flexible
         return b;
     }
 }
